@@ -40,22 +40,7 @@ class Module extends AbstractModule
         $sharedEventManager->attach(
             \Omeka\Api\Adapter\ItemAdapter::class,
             'api.search.query',
-            function (Event $event) {
-                $query = $event->getParam('request')->getContent();
-                if (isset($query['zotero_import_id'])) {
-                    $qb = $event->getParam('queryBuilder');
-                    $adapter = $event->getTarget();
-                    $importItemAlias = $adapter->createAlias();
-                    $itemAlias = \Omeka\Module::VERSION < 2 ? $adapter->getEntityClass() : 'omeka_root';
-                    $qb->innerJoin(
-                        \ZoteroImport\Entity\ZoteroImportItem::class, $importItemAlias,
-                        'WITH', "$importItemAlias.item = $itemAlias.id"
-                    )->andWhere($qb->expr()->eq(
-                        "$importItemAlias.import",
-                        $adapter->createNamedParameter($qb, $query['zotero_import_id'])
-                    ));
-                }
-            }
+            [$this, 'apiSearchQuery']
         );
 
         $sharedEventManager->attach(
@@ -78,6 +63,27 @@ class Module extends AbstractModule
             'view.show.sidebar',
             [$this, 'adminViewShowSidebar']
         );
+    }
+
+    public function apiSearchQuery(Event $event)
+    {
+        $query = $event->getParam('request')->getContent();
+        if (isset($query['zotero_import_id'])) {
+            $qb = $event->getParam('queryBuilder');
+            $adapter = $event->getTarget();
+            $itemAlias = \Omeka\Module::VERSION < 2 ? $adapter->getEntityClass() : 'omeka_root';
+            $importItemAlias = $adapter->createAlias();
+            $qb
+                ->innerJoin(
+                    \ZoteroImport\Entity\ZoteroImportItem::class, $importItemAlias,
+                    'WITH', "$importItemAlias.item = $itemAlias.id"
+                )
+                ->andWhere($qb->expr()->eq(
+                    "$importItemAlias.import",
+                    $adapter->createNamedParameter($qb, $query['zotero_import_id'])
+                )
+            );
+        }
     }
 
     public function adminViewLayout(Event $event)
