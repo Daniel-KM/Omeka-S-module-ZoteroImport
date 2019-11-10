@@ -89,13 +89,11 @@ class Module extends AbstractModule
     {
         $view = $event->getTarget();
         $resource = $view->resource;
-        $services = $this->getServiceLocator();
-        $translator = $services->get('MvcTranslator');
         $query = [];
         $query['resource_type'] = $resource->resourceName();
         $query['resource_ids'] = [$resource->id()];
         $link = $view->hyperlink(
-            $translator->translate('Export to Zotero'), // @translate
+            $view->translate('Export to Zotero'), // @translate
             $view->url('admin/zotero/default', ['action' => 'export'], ['query' => $query])
         );
         echo '<div class="meta-group">'

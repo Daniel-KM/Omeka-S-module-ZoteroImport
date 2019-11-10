@@ -1,9 +1,25 @@
 <?php
+/**
+ * @var \Zend\View\Renderer\PhpRenderer $this
+ * @var \ZoteroImport\Form\ExportForm $form
+ * @var \Omeka\Api\Representation\ItemRepresentation[] $resources
+ * @var \Omeka\Api\Representation\ItemSetRepresentation[] $itemSets
+ * @var int $itemSetCount
+ * @var int $count
+ * @var array $query
+ * @var array $itemQuery
+ * @var array $itemSetQuery
+ */
+
 $translate = $this->plugin('translate');
 $escape = $this->plugin('escapeHtml');
+$hyperlink = $this->plugin('hyperlink');
+$url = $this->plugin('url');
+
 $form->prepare();
 $this->htmlElement('body')->appendAttribute('class', 'zotero export items');
 ?>
+
 <?php echo $this->pageTitle($translate('Export to Zotero')); ?>
 
 <?php $this->trigger('view.batch_edit.before'); ?>
@@ -11,7 +27,7 @@ $this->htmlElement('body')->appendAttribute('class', 'zotero export items');
 <?php echo $this->form()->openTag($form); ?>
 
 <div id="page-actions">
-    <input type="submit" name="batch_process" value="<?php echo $this->escapeHtml($translate('Export')); ?>">
+    <input type="submit" name="batch_process" value="<?php echo $escape($translate('Export')); ?>">
 </div>
 
 <?php echo $this->formCollection($form, false); ?>
@@ -29,7 +45,7 @@ $this->htmlElement('body')->appendAttribute('class', 'zotero export items');
     <?php elseif ($itemSetCount): ?>
     <?php if ($itemSets): ?>
     <p><?php echo sprintf($translate('You are exporting %1$s items that belong to the following %2$d item sets:'),
-        $this->hyperlink(number_format($count), $this->url('admin/default', ['controller' => 'item', 'action' => 'browse'], ['query' => $itemQuery], true), ['target' => '_blank']),
+        $hyperlink(number_format($count), $url('admin/default', ['controller' => 'item', 'action' => 'browse'], ['query' => $itemQuery], true), ['target' => '_blank']),
         count($itemSets));
     ?></p>
     <ul class="batch-selected">
@@ -39,13 +55,13 @@ $this->htmlElement('body')->appendAttribute('class', 'zotero export items');
     </ul>
     <?php else: ?>
     <p><?php echo sprintf($translate('You are exporting %1$s items that belong to %2$s item sets.'),
-        $this->hyperlink(number_format($count), $this->url('admin/default', ['controller' => 'item', 'action' => 'browse'], ['query' => $itemQuery], true), ['target' => '_blank']),
-        $this->hyperlink(number_format($itemSetCount), $this->url('admin/default', ['controller' => 'item-set', 'action' => 'browse'], ['query' => $itemSetQuery], true), ['target' => '_blank']));
+        $hyperlink(number_format($count), $url('admin/default', ['controller' => 'item', 'action' => 'browse'], ['query' => $itemQuery], true), ['target' => '_blank']),
+        $hyperlink(number_format($itemSetCount), $url('admin/default', ['controller' => 'item-set', 'action' => 'browse'], ['query' => $itemSetQuery], true), ['target' => '_blank']));
     ?></p>
     <?php endif; ?>
     <?php else: ?>
     <p><?php echo sprintf($translate('You are exporting %s items.'),
-        $this->hyperlink(number_format($count), $this->url(null, ['action' => 'browse'], ['query' => $query], true), ['target' => '_blank']));
+        $hyperlink(number_format($count), $url(null, ['action' => 'browse'], ['query' => $query], true), ['target' => '_blank']));
     ?></p>
     <?php endif; ?>
 
