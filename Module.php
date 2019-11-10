@@ -46,9 +46,10 @@ class Module extends AbstractModule
                     $qb = $event->getParam('queryBuilder');
                     $adapter = $event->getTarget();
                     $importItemAlias = $adapter->createAlias();
+                    $itemAlias = \Omeka\Module::VERSION < 2 ? $adapter->getEntityClass() : 'omeka_root';
                     $qb->innerJoin(
                         \ZoteroImport\Entity\ZoteroImportItem::class, $importItemAlias,
-                        'WITH', "$importItemAlias.item = omeka_root.id"
+                        'WITH', "$importItemAlias.item = $itemAlias.id"
                     )->andWhere($qb->expr()->eq(
                         "$importItemAlias.import",
                         $adapter->createNamedParameter($qb, $query['zotero_import_id'])

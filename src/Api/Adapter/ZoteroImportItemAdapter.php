@@ -44,8 +44,9 @@ class ZoteroImportItemAdapter extends AbstractEntityAdapter
     public function buildQuery(QueryBuilder $qb, array $query)
     {
         if (isset($query['import_id'])) {
+            $alias = \Omeka\Module::VERSION < 2 ? $this->getEntityClass() : 'omeka_root';
             $qb->andWhere($qb->expr()->eq(
-                'omeka_root.import',
+                $alias . '.import',
                 $this->createNamedParameter($qb, $query['import_id']))
             );
         }
