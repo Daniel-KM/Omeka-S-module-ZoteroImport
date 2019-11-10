@@ -161,7 +161,7 @@ class IndexController extends AbstractActionController
         // Export of item sets is managed like a query for all their items.
         $itemSets = [];
         $itemSetCount = 0;
-        $itemSetQuery= null;
+        $itemSetQuery = null;
         $itemQuery = $query;
 
         if ($selectAll || $resource === 'item_sets') {

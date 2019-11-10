@@ -120,7 +120,7 @@ class Export extends AbstractZoteroSync
 
         $this->resourceClassMap = $this->loadMapping('resource_class_map');
         $this->itemTypeMap = $this->prepareMapping('item_type_map');
-        $this->creatorNameMap =  $this->loadMapping('creator_name_map');
+        $this->creatorNameMap = $this->loadMapping('creator_name_map');
         $this->propertyMap = $this->loadMapping('property_map');
 
         $this->setImportClient();
@@ -201,7 +201,7 @@ class Export extends AbstractZoteroSync
 
         // Prepare Zotero items.
         foreach ($itemIds as $itemId) {
-            try{
+            try {
                 /** @var \Omeka\Api\Representation\ItemRepresentation $item */
                 $item = $this->api->read('items', $itemId)->getContent();
             } catch (NotFoundException $e) {

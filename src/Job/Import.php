@@ -78,7 +78,7 @@ class Import extends AbstractZoteroSync
             'itemType' => '-note',
         ];
         if ($collectionKey) {
-             $url = $this->url->collectionItems($collectionKey, $params);
+            $url = $this->url->collectionItems($collectionKey, $params);
         } else {
             $url = $this->url->items($params);
         }
@@ -334,7 +334,7 @@ class Import extends AbstractZoteroSync
      * @param array $zoteroItem The Zotero item data
      * @param array $omekaItem The Omeka item data
      * @return string
-      */
+     */
     protected function mapAttachment($zoteroItem, $omekaItem)
     {
         if ('attachment' === $zoteroItem['data']['itemType']
@@ -345,7 +345,7 @@ class Import extends AbstractZoteroSync
             $property = $this->properties['dcterms']['title'];
             $omekaItem['o:media'][] = [
                 'o:ingester' => 'url',
-                'o:source'   => $this->url->itemFile($zoteroItem['key']),
+                'o:source' => $this->url->itemFile($zoteroItem['key']),
                 'ingest_url' => $this->url->itemFile(
                     $zoteroItem['key'],
                     ['key' => $this->getArg('apiKey')]
