@@ -83,7 +83,8 @@ class Module extends AbstractModule
     public function adminViewLayout(Event $event)
     {
         $view = $event->getTarget();
-        $view->headScript()->appendFile($view->assetUrl('js/zotero-import.js', 'ZoteroImport'));
+        $view->headScript()
+            ->appendFile($view->assetUrl('js/zotero-import.js', 'ZoteroImport'), 'text/javascript', ['defer' => 'defer']);
     }
 
     public function adminViewShowSidebar(Event $event)
