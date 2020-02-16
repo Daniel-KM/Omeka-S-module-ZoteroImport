@@ -89,9 +89,9 @@ class Import extends AbstractZoteroSync
         $this->cacheResourceClasses();
         $this->cacheProperties();
 
-        $this->itemTypeMap = $this->prepareMapping('item_type_map');
-        $this->itemFieldMap = $this->prepareMapping('item_field_map');
-        $this->creatorTypeMap = $this->prepareMapping('creator_type_map');
+        $this->itemTypeMap = $this->prepareMapping('item_type_map', 'resourceClasses');
+        $this->itemFieldMap = $this->prepareMapping('item_field_map', 'properties');
+        $this->creatorTypeMap = $this->prepareMapping('creator_type_map', 'properties');
 
         $this->personName = $this->getArg('personName');
         $this->tagLanguage = $this->getArg('tagLanguage');
@@ -243,13 +243,11 @@ class Import extends AbstractZoteroSync
         if (!isset($this->itemTypeMap[$type])) {
             return $omekaItem;
         }
-        foreach ($this->itemTypeMap[$type] as $prefix => $localName) {
-            if (isset($this->resourceClasses[$prefix][$localName])) {
-                $classId = $this->resourceClasses[$prefix][$localName];
-                $omekaItem['o:resource_class'] = ['o:id' => $classId];
-                return $omekaItem;
-            }
-        }
+        // All the fields are already checked.
+        $localName = reset($this->itemTypeMap[$type]);
+        $prefix = key($this->itemTypeMap[$type]);
+        $classId = $this->resourceClasses[$prefix][$localName];
+        $omekaItem['o:resource_class'] = ['o:id' => $classId];
         return $omekaItem;
     }
 
@@ -272,22 +270,19 @@ class Import extends AbstractZoteroSync
             if (!isset($this->itemFieldMap[$key])) {
                 continue;
             }
+            // All the fields are already checked.
             foreach ($this->itemFieldMap[$key] as $prefix => $localName) {
-                if (isset($this->properties[$prefix][$localName])) {
-                    $propertyId = $this->properties[$prefix][$localName];
-                    $valueObject = [];
-                    $valueObject['property_id'] = $propertyId;
-                    // Manage an exception.
-                    if ('bibo' == $prefix && 'uri' == $localName) {
-                        $valueObject['@id'] = $value;
-                        $valueObject['type'] = 'uri';
-                    } else {
-                        $valueObject['@value'] = $value;
-                        $valueObject['type'] = 'literal';
-                    }
-                    $omekaItem[$prefix . ':' . $localName][] = $valueObject;
-                    continue 2;
+                $valueObject = [];
+                $valueObject['property_id'] = $this->properties[$prefix][$localName];
+                // Manage an exception.
+                if ('bibo' == $prefix && 'uri' == $localName) {
+                    $valueObject['@id'] = $value;
+                    $valueObject['type'] = 'uri';
+                } else {
+                    $valueObject['@value'] = $value;
+                    $valueObject['type'] = 'literal';
                 }
+                $omekaItem[$prefix . ':' . $localName][] = $valueObject;
             }
         }
         return $omekaItem;
@@ -368,15 +363,11 @@ class Import extends AbstractZoteroSync
             }
 
             foreach ($this->creatorTypeMap[$creatorType] as $prefix => $localName) {
-                if (isset($this->properties[$prefix][$localName])) {
-                    $propertyId = $this->properties[$prefix][$localName];
-                    $omekaItem[$prefix . ':' . $localName][] = [
-                        '@value' => $name,
-                        'property_id' => $propertyId,
-                        'type' => 'literal',
-                    ];
-                    continue 2;
-                }
+                $omekaItem[$prefix . ':' . $localName][] = [
+                    '@value' => $name,
+                    'property_id' => $this->properties[$prefix][$localName],
+                    'type' => 'literal',
+                ];
             }
         }
         return $omekaItem;

@@ -119,7 +119,7 @@ class Export extends AbstractZoteroSync
         $this->cacheProperties();
 
         $this->resourceClassMap = $this->loadMapping('resource_class_map');
-        $this->itemTypeMap = $this->prepareMapping('item_type_map');
+        $this->itemTypeMap = $this->prepareMapping('item_type_map', 'resource_classes');
         $this->creatorNameMap = $this->loadMapping('creator_name_map');
         $this->propertyMap = $this->loadMapping('property_map');
 

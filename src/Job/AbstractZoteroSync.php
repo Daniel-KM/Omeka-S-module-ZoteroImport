@@ -115,18 +115,25 @@ abstract class AbstractZoteroSync extends AbstractJob
     /**
      * Convert a mapping with terms into a mapping with prefix and local name.
      *
+     * Only the existing terms are mapped.
+     *
      * @param string $mapping
+     * @param string $termType
      * @return array
      */
-    protected function prepareMapping($mapping)
+    protected function prepareMapping($mapping, $termType)
     {
         $map = $this->loadMapping($mapping);
-        foreach ($map as &$term) {
+        foreach ($map as $key => &$term) {
             if ($term) {
                 $value = explode(':', $term);
-                $term = [$value[0] => $value[1]];
+                if (isset($this->$termType[$value[0]][$value[1]])) {
+                    $term = [$value[0] => $value[1]];
+                } else {
+                    unset($map[$key]);
+                }
             } else {
-                $term = [];
+                unset($map[$key]);
             }
         }
         return $map;
