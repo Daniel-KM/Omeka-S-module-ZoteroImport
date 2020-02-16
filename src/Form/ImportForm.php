@@ -125,6 +125,19 @@ In case of multiple duplicates, only the first one is updated.', // @translate
             ],
         ]);
 
+        $this
+            ->add([
+                'name' => 'zoteroimport_tag_language',
+                'type' => Element\Text::class,
+                'options' => [
+                    'label' => 'Language of tags', // @translate
+                ],
+                'attributes' => [
+                    'id' => 'zoteroimport_tag_language',
+                ],
+            ])
+        ;
+
         $inputFilter = $this->getInputFilter();
 
         $inputFilter->add([

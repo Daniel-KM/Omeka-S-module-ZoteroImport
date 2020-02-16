@@ -18,6 +18,13 @@ class Import extends AbstractZoteroSync
     protected $creatorTypeMap = [];
 
     /**
+     * Language of the tags.
+     *
+     * @var string
+     */
+    protected $tagLanguage = null;
+
+    /**
      * Perform the import.
      *
      * Accepts the following arguments:
@@ -32,6 +39,7 @@ class Import extends AbstractZoteroSync
      * - action:        What to do with existing items (string)
      * - version:       The Zotero Last-Modified-Version of the last import (int)
      * - timestamp:     The Zotero dateAdded timestamp (UTC) to begin importing (int)
+     * - tagLanguage:   The language of the tags for dcterms:subject (string)
      *
      * Roughly follows Zotero's recommended steps for synchronizing a Zotero Web
      * API client with the Zotero server. But for the purposes of this job, a
@@ -58,6 +66,8 @@ class Import extends AbstractZoteroSync
         $this->itemTypeMap = $this->prepareMapping('item_type_map');
         $this->itemFieldMap = $this->prepareMapping('item_field_map');
         $this->creatorTypeMap = $this->prepareMapping('creator_type_map');
+
+        $this->tagLanguage = $this->getArg('tagLanguage');
 
         $this->setImportClient();
         $this->setImportUrl();
@@ -317,6 +327,8 @@ class Import extends AbstractZoteroSync
                 '@value' => $tag['tag'],
                 'property_id' => $property->id(),
                 'type' => 'literal',
+                '@value' => $tag['tag'],
+                '@language' => $this->tagLanguage,
             ];
         }
         return $omekaItem;

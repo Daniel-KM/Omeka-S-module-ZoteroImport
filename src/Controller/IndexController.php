@@ -52,7 +52,13 @@ class IndexController extends AbstractActionController
                     'action'        => $data['action'],
                     'version'       => 0,
                     'timestamp'     => $timestamp,
+                    'tagLanguage' => trim($data['zoteroimport_tag_language']),
                 ];
+
+                // Save generic arguments as settings.
+                // TODO Use user settings?
+                $settings = $this->settings();
+                $settings->set('zoteroimport_tag_language', $args['tagLanguage']);
 
                 if ($args['apiKey'] && !($username = $this->apiKeyIsValid($args))) {
                     $this->messenger()->addError(
@@ -103,6 +109,13 @@ class IndexController extends AbstractActionController
             } else {
                 $this->messenger()->addFormErrors($form);
             }
+        } else {
+            // Set generic arguments.
+            $settings = $this->settings();
+            $args = [
+                'zoteroimport_tag_language', $settings->get('zoteroimport_tag_language'),
+            ];
+            $form->setData($args);
         }
 
         $view = new ViewModel;

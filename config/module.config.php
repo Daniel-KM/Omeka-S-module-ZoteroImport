@@ -127,4 +127,9 @@ return [
         'Export selected to Zotero', // @translate
         'Export all to Zotero', // @translate
     ],
+    'zoteroimport' => [
+        'settings' => [
+            'zoteroimport_tag_language' => '',
+        ],
+    ],
 ];
