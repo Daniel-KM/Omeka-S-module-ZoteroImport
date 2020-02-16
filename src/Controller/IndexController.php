@@ -53,6 +53,7 @@ class IndexController extends AbstractActionController
                     'version'       => 0,
                     'timestamp'     => $timestamp,
                     'personName' => $data['zoteroimport_person_name'],
+                    'mapTemplate' => $data['zoteroimport_map_template'],
                     'tagLanguage' => trim($data['zoteroimport_tag_language']),
                     'tagAsItem' => (bool) $data['zoteroimport_tag_as_item'],
                     'tagAsSkos' => (bool) $data['zoteroimport_tag_as_skos'],
@@ -64,6 +65,7 @@ class IndexController extends AbstractActionController
                 // TODO Use user settings?
                 $settings = $this->settings();
                 $settings->set('zoteroimport_person_name', $args['personName']);
+                $settings->set('zoteroimport_map_template', $args['mapTemplate']);
                 $settings->set('zoteroimport_tag_language', $args['tagLanguage']);
                 $settings->set('zoteroimport_tag_as_item', $args['tagAsItem']);
                 $settings->set('zoteroimport_tag_as_skos', $args['tagAsSkos']);
@@ -124,6 +126,7 @@ class IndexController extends AbstractActionController
             $settings = $this->settings();
             $args = [
                 'zoteroimport_person_name' => $settings->get('zoteroimport_person_name'),
+                'zoteroimport_map_template' => $settings->get('zoteroimport_map_template'),
                 'zoteroimport_tag_language', $settings->get('zoteroimport_tag_language'),
                 'zoteroimport_tag_as_item' => $settings->get('zoteroimport_tag_as_item'),
                 'zoteroimport_tag_as_skos' => $settings->get('zoteroimport_tag_as_skos'),

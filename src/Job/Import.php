@@ -18,6 +18,20 @@ class Import extends AbstractZoteroSync
     protected $creatorTypeMap = [];
 
     /**
+     * Priority map between Zotero item types and Omeka resource templates.
+     *
+     * @var array
+     */
+    protected $itemTypeTemplateMap = [];
+
+    /**
+     * Map item types with resource templates.
+     *
+     * @var string
+     */
+    protected $mapTemplate = 'no';
+
+    /**
      * Map tags as items.
      *
      * @var bool
@@ -61,6 +75,7 @@ class Import extends AbstractZoteroSync
      * - version:       The Zotero Last-Modified-Version of the last import (int)
      * - timestamp:     The Zotero dateAdded timestamp (UTC) to begin importing (int)
      * - personName:    Format to use for the name (first name / last name) (string)
+     * - mapTemplate:   Map item types with templates (string)
      * - tagLanguage:   The language of the tags for dcterms:subject (string)
      * - tagAsItem:     Uses items for tags, making them translatable (string)
      * - tagAsSkos:     With tags as items, create tags as skos concept (bool)
@@ -94,9 +109,16 @@ class Import extends AbstractZoteroSync
         $this->creatorTypeMap = $this->prepareMapping('creator_type_map', 'properties');
 
         $this->personName = $this->getArg('personName');
+        $this->mapTemplate = $this->getArg('mapTemplate');
         $this->tagLanguage = $this->getArg('tagLanguage');
         // TODO Do a first pass to create all items for tags.
         $this->tagAsItem = $this->getArg('tagAsItem');
+
+        if ($this->mapTemplate === 'map') {
+            $this->cacheResourceTemplates();
+            $this->itemTypeTemplateMap = $this->loadMapping('item_type_map_template');
+            $this->itemTypeTemplateMap = array_intersect($this->itemTypeTemplateMap, array_keys($this->resourceTemplates));
+        }
 
         $this->setImportClient();
         $this->setImportUrl();
@@ -153,6 +175,9 @@ class Import extends AbstractZoteroSync
         foreach ($zParentItems as $zParentItemKey => &$zParentItem) {
             $oItem = [];
             $oItem['o:item_set'] = [['o:id' => $itemSet->id()]];
+            if ($this->mapTemplate === 'map') {
+                $oItem = $this->mapResourceTemplate($zParentItem, $oItem);
+            }
             $oItem = $this->mapResourceClass($zParentItem, $oItem);
             $oItem = $this->mapNameValues($zParentItem, $oItem);
             $oItem = $this->tagAsItem
@@ -225,6 +250,28 @@ class Import extends AbstractZoteroSync
 
             $api->batchCreate('zotero_import_items', $importItems, [], ['continueOnError' => true]);
         }
+    }
+
+    /**
+     * Map Zotero item type to Omeka resource template.
+     *
+     * @param array $zoteroItem The Zotero item data
+     * @param array $omekaItem The Omeka item data
+     * @return array
+     */
+    protected function mapResourceTemplate(array $zoteroItem, array $omekaItem)
+    {
+        if (!isset($zoteroItem['data']['itemType'])) {
+            return $omekaItem;
+        }
+        $type = $zoteroItem['data']['itemType'];
+        if (!isset($this->itemTypeTemplateMap[$type])) {
+            return $omekaItem;
+        }
+        // All the fields are already intersected.
+        $templateId = $this->resourceTemplates[$this->itemTypeTemplateMap[$type]];
+        $omekaItem['o:resource_template'] = ['o:id' => $templateId];
+        return $omekaItem;
     }
 
     /**

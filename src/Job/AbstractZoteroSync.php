@@ -49,6 +49,13 @@ abstract class AbstractZoteroSync extends AbstractJob
     protected $url;
 
     /**
+     * Cache of Omeka resource templates.
+     *
+     * @var array
+     */
+    protected $resourceTemplates = [];
+
+    /**
      * Cache of Omeka resource classes.
      *
      * @var array
@@ -70,6 +77,18 @@ abstract class AbstractZoteroSync extends AbstractJob
     protected $itemTypeMap = [];
 
     abstract public function perform();
+
+    /**
+     * Cache resource templates.
+     */
+    protected function cacheResourceTemplates()
+    {
+        /** @var \Omeka\Api\Representation\ResourceTemplateRepresentation[] $templates */
+        $templates = $this->api->search('resource_templates')->getContent();
+        foreach ($templates as $template) {
+            $this->resourceTemplates[$template->label()] = $template->id();
+        }
+    }
 
     /**
      * Cache resource classes.

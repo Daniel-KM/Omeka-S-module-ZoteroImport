@@ -143,6 +143,21 @@ In case of multiple duplicates, only the first one is updated.', // @translate
                 ],
             ])
             ->add([
+                'name' => 'zoteroimport_map_template',
+                'type' => Element\Radio::class,
+                'options' => [
+                    'label' => 'Set resource template', // @translate
+                    'value_options' => [
+                        'no' => 'No', // @translate
+                        'map' => 'Via map file', // @translate
+                    ],
+                ],
+                'attributes' => [
+                    'id' => 'zoteroimport_map_template',
+                    'value' => 'no',
+                ],
+            ])
+            ->add([
                 'name' => 'zoteroimport_tag_language',
                 'type' => Element\Text::class,
                 'options' => [
@@ -307,6 +322,11 @@ In case of multiple duplicates, only the first one is updated.', // @translate
 
         $inputFilter->add([
             'name' => 'zoteroimport_person_name',
+            'required' => false,
+        ]);
+
+        $inputFilter->add([
+            'name' => 'zoteroimport_map_template',
             'required' => false,
         ]);
 
