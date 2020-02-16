@@ -127,6 +127,22 @@ In case of multiple duplicates, only the first one is updated.', // @translate
 
         $this
             ->add([
+                'name' => 'zoteroimport_person_name',
+                'type' => Element\Select::class,
+                'options' => [
+                    'label' => 'Convert person name', // @translate
+                    'value_options' => [
+                        'first' => '[name] of [first name] [last name]', // @translate
+                        'last' => '[name] or [last name] [first name]', // @translate
+                        'last_comma' => '[name] or [last name], [first name]', // @translate
+                    ],
+                ],
+                'attributes' => [
+                    'id' => 'zoteroimport_person_name',
+                    'class' => 'chosen-select',
+                ],
+            ])
+            ->add([
                 'name' => 'zoteroimport_tag_language',
                 'type' => Element\Text::class,
                 'options' => [
@@ -286,6 +302,11 @@ In case of multiple duplicates, only the first one is updated.', // @translate
 
         $inputFilter->add([
             'name' => 'addedAfter',
+            'required' => false,
+        ]);
+
+        $inputFilter->add([
+            'name' => 'zoteroimport_person_name',
             'required' => false,
         ]);
 

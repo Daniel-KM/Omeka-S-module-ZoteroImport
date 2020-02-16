@@ -52,6 +52,7 @@ class IndexController extends AbstractActionController
                     'action'        => $data['action'],
                     'version'       => 0,
                     'timestamp'     => $timestamp,
+                    'personName' => $data['zoteroimport_person_name'],
                     'tagLanguage' => trim($data['zoteroimport_tag_language']),
                     'tagAsItem' => (bool) $data['zoteroimport_tag_as_item'],
                     'tagAsSkos' => (bool) $data['zoteroimport_tag_as_skos'],
@@ -62,6 +63,7 @@ class IndexController extends AbstractActionController
                 // Save generic arguments as settings.
                 // TODO Use user settings?
                 $settings = $this->settings();
+                $settings->set('zoteroimport_person_name', $args['personName']);
                 $settings->set('zoteroimport_tag_language', $args['tagLanguage']);
                 $settings->set('zoteroimport_tag_as_item', $args['tagAsItem']);
                 $settings->set('zoteroimport_tag_as_skos', $args['tagAsSkos']);
@@ -121,6 +123,7 @@ class IndexController extends AbstractActionController
             // Set generic arguments.
             $settings = $this->settings();
             $args = [
+                'zoteroimport_person_name' => $settings->get('zoteroimport_person_name'),
                 'zoteroimport_tag_language', $settings->get('zoteroimport_tag_language'),
                 'zoteroimport_tag_as_item' => $settings->get('zoteroimport_tag_as_item'),
                 'zoteroimport_tag_as_skos' => $settings->get('zoteroimport_tag_as_skos'),

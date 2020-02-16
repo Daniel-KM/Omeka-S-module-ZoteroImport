@@ -129,6 +129,7 @@ return [
     ],
     'zoteroimport' => [
         'settings' => [
+            'zoteroimport_person_name' => 'first',
             'zoteroimport_tag_language' => '',
             'zoteroimport_tag_as_item' => false,
             'zoteroimport_tag_as_skos' => false,

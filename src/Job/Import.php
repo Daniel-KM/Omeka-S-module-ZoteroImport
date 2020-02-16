@@ -39,6 +39,13 @@ class Import extends AbstractZoteroSync
     protected $tagsToItems = [];
 
     /**
+     * Format of the person names.
+     *
+     * @var string
+     */
+    protected $personName = 'first';
+
+    /**
      * Perform the import.
      *
      * Accepts the following arguments:
@@ -53,6 +60,7 @@ class Import extends AbstractZoteroSync
      * - action:        What to do with existing items (string)
      * - version:       The Zotero Last-Modified-Version of the last import (int)
      * - timestamp:     The Zotero dateAdded timestamp (UTC) to begin importing (int)
+     * - personName:    Format to use for the name (first name / last name) (string)
      * - tagLanguage:   The language of the tags for dcterms:subject (string)
      * - tagAsItem:     Uses items for tags, making them translatable (string)
      * - tagAsSkos:     With tags as items, create tags as skos concept (bool)
@@ -85,6 +93,7 @@ class Import extends AbstractZoteroSync
         $this->itemFieldMap = $this->prepareMapping('item_field_map');
         $this->creatorTypeMap = $this->prepareMapping('creator_type_map');
 
+        $this->personName = $this->getArg('personName');
         $this->tagLanguage = $this->getArg('tagLanguage');
         // TODO Do a first pass to create all items for tags.
         $this->tagAsItem = $this->getArg('tagAsItem');
@@ -301,20 +310,43 @@ class Import extends AbstractZoteroSync
             if (!isset($this->creatorTypeMap[$creatorType])) {
                 continue;
             }
-            $name = [];
+
+            $name = '';
             if (isset($creator['name'])) {
-                $name[] = $creator['name'];
+                $name = $creator['name'];
             }
-            if (isset($creator['firstName'])) {
-                $name[] = $creator['firstName'];
+            switch ($this->personName) {
+                case 'last_comma':
+                    if (isset($creator['lastName'])) {
+                        $name .= ' ' . $creator['lastName'];
+                    }
+                    if (isset($creator['firstName'])) {
+                        $name .= ', ' . $creator['firstName'];
+                    }
+                    break;
+                case 'last':
+                    if (isset($creator['lastName'])) {
+                        $name .= ' ' . $creator['lastName'];
+                    }
+                    if (isset($creator['firstName'])) {
+                        $name .= ' ' . $creator['firstName'];
+                    }
+                    break;
+                case 'first':
+                default:
+                    if (isset($creator['firstName'])) {
+                        $name .= ' ' . $creator['firstName'];
+                    }
+                    if (isset($creator['lastName'])) {
+                        $name .= ' ' . $creator['lastName'];
+                    }
+                    break;
             }
-            if (isset($creator['lastName'])) {
-                $name[] = $creator['lastName'];
-            }
+
             if (!$name) {
                 continue;
             }
-            $name = implode(' ', $name);
+
             foreach ($this->creatorTypeMap[$creatorType] as $prefix => $localName) {
                 if (isset($this->properties[$prefix][$localName])) {
                     $property = $this->properties[$prefix][$localName];
