@@ -102,12 +102,22 @@ class IndexController extends AbstractActionController
                             'o:job' => ['o:id' => $job->getId()],
                         ]);
                         $message = new Message(
-                            'Importing from Zotero. %s', // @translate
+                            'Importing from Zotero in background (job %1$s#%2$s%3$s, %4$slogs%3$s). %5$sImport another?%3$s', // @translate
                             sprintf(
-                                '<a href="%s">%s</a>',
-                                htmlspecialchars($this->url()->fromRoute(null, [], true)),
-                                $this->translate('Import another?')
-                            ));
+                                '<a href="%s">',
+                                htmlspecialchars($this->url()->fromRoute('admin/id', ['controller' => 'job', 'id' => $job->getId()]))
+                            ),
+                            $job->getId(),
+                            '</a>',
+                            sprintf(
+                                '<a href="%s">',
+                                htmlspecialchars($this->url()->fromRoute('admin/id', ['controller' => 'job', 'id' => $job->getId(), 'action' => 'log']))
+                            ),
+                            sprintf(
+                                '<a href="%s">',
+                                htmlspecialchars($this->url()->fromRoute(null, [], true))
+                            )
+                        );
                         $message->setEscapeHtml(false);
                         $this->messenger()->addSuccess($message);
                         return $this->redirect()->toRoute('admin/zotero/default', ['action' => 'browse']);
