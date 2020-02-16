@@ -57,6 +57,7 @@ abstract class AbstractZoteroSync extends AbstractJob
         'dcterms' => 'http://purl.org/dc/terms/',
         'dctype'  => 'http://purl.org/dc/dcmitype/',
         'bibo'    => 'http://purl.org/ontology/bibo/',
+        'skos'    => 'http://www.w3.org/2004/02/skos/core#',
     ];
 
     /**

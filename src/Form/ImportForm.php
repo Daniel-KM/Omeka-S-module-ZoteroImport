@@ -136,6 +136,55 @@ In case of multiple duplicates, only the first one is updated.', // @translate
                     'id' => 'zoteroimport_tag_language',
                 ],
             ])
+            ->add([
+                'name' => 'zoteroimport_tag_as_item',
+                'type' => Element\Checkbox::class,
+                'options' => [
+                    'label' => 'Map tags as items', // @translate
+                    'info' => 'To use tags as items allows to make them translatable and to build a full thesaurus, manageable with CustomVocab.', // @translate
+                ],
+                'attributes' => [
+                    'id' => 'zoteroimport_tag_as_item',
+                ],
+            ])
+            ->add([
+                'name' => 'zoteroimport_tag_as_skos',
+                'type' => Element\Checkbox::class,
+                'options' => [
+                    'label' => 'Use skos for tag as items', // @translate
+                    'info' => 'Create items with the ontology skos (see module Thesaurus).', // @translate
+                ],
+                'attributes' => [
+                    'id' => 'zoteroimport_tag_as_skos',
+                ],
+            ])
+            ->add([
+                'name' => 'zoteroimport_tag_main_item',
+                'type' => Element\Number::class,
+                'options' => [
+                    'label' => 'Main item id for tags', // @translate
+                    'info' => 'Add a relation "dcterms:isPartOf" or "skos:inScheme".', // @translate
+                ],
+                'attributes' => [
+                    'id' => 'zoteroimport_tag_main_item',
+                ],
+            ])
+            ->add([
+                'name' => 'zoteroimport_tag_item_set',
+                'type' => ItemSetSelect::class,
+                'options' => [
+                    'label' => 'item set for tags as items', // @translate
+                    'info' => 'Gather all tags in one item set.', // @translate
+                    'empty_option' => '',
+                ],
+                'attributes' => [
+                    'id' => 'zoteroimport_tag_item_set',
+                    'multiple' => false,
+                    'required' => false,
+                    'class' => 'chosen-select',
+                    'data-placeholder' => 'Select an item set…', // @translate
+                ],
+            ])
         ;
 
         $inputFilter = $this->getInputFilter();
@@ -237,6 +286,16 @@ In case of multiple duplicates, only the first one is updated.', // @translate
 
         $inputFilter->add([
             'name' => 'addedAfter',
+            'required' => false,
+        ]);
+
+        $inputFilter->add([
+            'name' => 'zoteroimport_tag_main_item',
+            'required' => false,
+        ]);
+
+        $inputFilter->add([
+            'name' => 'zoteroimport_tag_item_set',
             'required' => false,
         ]);
     }

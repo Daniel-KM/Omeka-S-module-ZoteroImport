@@ -53,12 +53,20 @@ class IndexController extends AbstractActionController
                     'version'       => 0,
                     'timestamp'     => $timestamp,
                     'tagLanguage' => trim($data['zoteroimport_tag_language']),
+                    'tagAsItem' => (bool) $data['zoteroimport_tag_as_item'],
+                    'tagAsSkos' => (bool) $data['zoteroimport_tag_as_skos'],
+                    'tagMainItem' => (int) $data['zoteroimport_tag_main_item'],
+                    'tagItemSet' => (int) $data['zoteroimport_tag_item_set'],
                 ];
 
                 // Save generic arguments as settings.
                 // TODO Use user settings?
                 $settings = $this->settings();
                 $settings->set('zoteroimport_tag_language', $args['tagLanguage']);
+                $settings->set('zoteroimport_tag_as_item', $args['tagAsItem']);
+                $settings->set('zoteroimport_tag_as_skos', $args['tagAsSkos']);
+                $settings->set('zoteroimport_tag_main_item', $args['tagMainItem']);
+                $settings->set('zoteroimport_tag_item_set', $args['tagItemSet']);
 
                 if ($args['apiKey'] && !($username = $this->apiKeyIsValid($args))) {
                     $this->messenger()->addError(
@@ -114,6 +122,10 @@ class IndexController extends AbstractActionController
             $settings = $this->settings();
             $args = [
                 'zoteroimport_tag_language', $settings->get('zoteroimport_tag_language'),
+                'zoteroimport_tag_as_item' => $settings->get('zoteroimport_tag_as_item'),
+                'zoteroimport_tag_as_skos' => $settings->get('zoteroimport_tag_as_skos'),
+                'zoteroimport_tag_main_item', $settings->get('zoteroimport_tag_main_item'),
+                'zoteroimport_tag_item_set', $settings->get('zoteroimport_tag_item_set'),
             ];
             $form->setData($args);
         }

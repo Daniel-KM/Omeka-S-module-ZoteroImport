@@ -130,6 +130,10 @@ return [
     'zoteroimport' => [
         'settings' => [
             'zoteroimport_tag_language' => '',
+            'zoteroimport_tag_as_item' => false,
+            'zoteroimport_tag_as_skos' => false,
+            'zoteroimport_tag_main_item' => null,
+            'zoteroimport_tag_item_set' => null,
         ],
     ],
 ];

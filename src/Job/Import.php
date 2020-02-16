@@ -18,11 +18,25 @@ class Import extends AbstractZoteroSync
     protected $creatorTypeMap = [];
 
     /**
+     * Map tags as items.
+     *
+     * @var bool
+     */
+    protected $tagAsItem = false;
+
+    /**
      * Language of the tags.
      *
      * @var string
      */
     protected $tagLanguage = null;
+
+    /**
+     * List of tags mapped to items.
+     *
+     * @var array
+     */
+    protected $tagsToItems = [];
 
     /**
      * Perform the import.
@@ -40,6 +54,10 @@ class Import extends AbstractZoteroSync
      * - version:       The Zotero Last-Modified-Version of the last import (int)
      * - timestamp:     The Zotero dateAdded timestamp (UTC) to begin importing (int)
      * - tagLanguage:   The language of the tags for dcterms:subject (string)
+     * - tagAsItem:     Uses items for tags, making them translatable (string)
+     * - tagAsSkos:     With tags as items, create tags as skos concept (bool)
+     * - tagMainItem:   With tags as items, relate the new tags to a main tag (int)
+     * - tagItemSet:    With tags as items, store the new tags in an item set (int)
      *
      * Roughly follows Zotero's recommended steps for synchronizing a Zotero Web
      * API client with the Zotero server. But for the purposes of this job, a
@@ -56,7 +74,7 @@ class Import extends AbstractZoteroSync
 
         $services = $this->getServiceLocator();
         $this->logger = $services->get('Omeka\Logger');
-        $api = $services->get('Omeka\ApiManager');
+        $api = $this->api = $services->get('Omeka\ApiManager');
 
         $itemSet = $api->read('item_sets', $this->getArg('itemSet'))->getContent();
 
@@ -68,6 +86,8 @@ class Import extends AbstractZoteroSync
         $this->creatorTypeMap = $this->prepareMapping('creator_type_map');
 
         $this->tagLanguage = $this->getArg('tagLanguage');
+        // TODO Do a first pass to create all items for tags.
+        $this->tagAsItem = $this->getArg('tagAsItem');
 
         $this->setImportClient();
         $this->setImportUrl();
@@ -126,7 +146,9 @@ class Import extends AbstractZoteroSync
             $oItem['o:item_set'] = [['o:id' => $itemSet->id()]];
             $oItem = $this->mapResourceClass($zParentItem, $oItem);
             $oItem = $this->mapNameValues($zParentItem, $oItem);
-            $oItem = $this->mapSubjectValues($zParentItem, $oItem);
+            $oItem = $this->tagAsItem
+                ? $this->mapSubjectValuesAsItems($zParentItem, $oItem)
+                : $this->mapSubjectValues($zParentItem, $oItem);
             $oItem = $this->mapValues($zParentItem, $oItem);
             $oItem = $this->mapAttachment($zParentItem, $oItem);
             if (isset($zChildItems[$zParentItemKey])) {
@@ -179,7 +201,7 @@ class Import extends AbstractZoteroSync
                 $fileData = isset($oItem['o:media']) ? $oItem['o:media'] : [];
                 try {
                     $response = $api->update('items', $oItem['id'], $oItem, $fileData, $options);
-                } catch (\Exception $e) {
+                } catch (\Omeka\Api\Exception\ExceptionInterface $e) {
                     $this->logger->err((string) $e);
                     continue;
                 }
@@ -320,15 +342,49 @@ class Import extends AbstractZoteroSync
         if (!isset($zoteroItem['data']['tags'])) {
             return $omekaItem;
         }
+
+        $property = $this->properties['dcterms']['subject'];
+        $propertyId = $property->id();
+        $propertyTerm = $property->term();
+
         $tags = $zoteroItem['data']['tags'];
         foreach ($tags as $tag) {
-            $property = $this->properties['dcterms']['subject'];
-            $omekaItem[$property->term()][] = [
-                '@value' => $tag['tag'],
-                'property_id' => $property->id(),
+            $omekaItem[$propertyTerm][] = [
+                'property_id' => $propertyId,
                 'type' => 'literal',
                 '@value' => $tag['tag'],
                 '@language' => $this->tagLanguage,
+            ];
+        }
+        return $omekaItem;
+    }
+
+    /**
+     * Map Zotero tags to Omeka items.
+     *
+     * @param array $zoteroItem The Zotero item data
+     * @param array $omekaItem The Omeka item data
+     * @return array
+     */
+    protected function mapSubjectValuesAsItems(array $zoteroItem, array $omekaItem)
+    {
+        if (!isset($zoteroItem['data']['tags'])) {
+            return $omekaItem;
+        }
+
+        $property = $this->properties['dcterms']['subject'];
+        $propertyId = $property->id();
+        $propertyTerm = $property->term();
+
+        $tags = $zoteroItem['data']['tags'];
+        foreach ($tags as $tag) {
+            $tagId = $this->readOrCreateItemForTag($tag['tag']);
+            $omekaItem[$propertyTerm][] = [
+                'property_id' => $propertyId,
+                'type' => 'resource:item',
+                '@value' => null,
+                '@language' => null,
+                'value_resource_id' => $tagId,
             ];
         }
         return $omekaItem;
@@ -372,5 +428,131 @@ class Import extends AbstractZoteroSync
             ];
         }
         return $omekaItem;
+    }
+
+    /**
+     * Create a tag as item if not exist.
+     *
+     * @param string $tag
+     * @return int
+     */
+    protected function readOrCreateItemForTag($tag)
+    {
+        static $tagAsSkos;
+        static $defaultParams;
+        static $defaultTagData;
+        static $defaultTagTerm;
+
+        if (isset($this->tagsToItems[$tag])) {
+            return $this->tagsToItems[$tag];
+        }
+
+        // Prepare search one time.
+        if (is_null($defaultParams)) {
+            $tagAsSkos = $this->getArg('tagAsSkos')
+                && (
+                    $this->api->search('vocabularies', ['namespace_uri' => 'http://www.w3.org/2004/02/skos/core#'])->getTotalResults()
+                    || $this->api->search('vocabularies', ['namespace_uri' => 'http://www.w3.org/2004/02/skos/core'])->getTotalResults()
+                );
+
+            $tagMainItemId = $this->getArg('tagMainItem');
+            // Check if the item exists, because it could have been removed.
+            if ($tagMainItemId) {
+                try {
+                    $tagMainItemId = $this->api->read('items', ['id' => $tagMainItemId])->getContent()->id();
+                } catch (\Omeka\Api\Exception\NotFoundException $e) {
+                    $this->logger->warn(sprintf('The item "%s" is not available to relate tag as item.', $tagMainItemId)); // @translate
+                    $tagMainItemId = null;
+                }
+            }
+
+            $tagItemSetId = $this->getArg('tagItemSet');
+            // Check if the item set exists, because it could have been removed.
+            if ($tagItemSetId) {
+                try {
+                    $tagItemSetId = $this->api->read('item_sets', ['id' => $tagItemSetId])->getContent()->id();
+                } catch (\Omeka\Api\Exception\NotFoundException $e) {
+                    $this->logger->warn(sprintf('The item set "%s" is not available to store tag as item.', $tagItemSetId)); // @translate
+                    $tagItemSetId = null;
+                }
+            }
+
+            $tagLanguage = $this->getArg('tagLanguage');
+
+            $propertyTerm = $tagAsSkos ? 'skos:prefLabel' : 'dcterms:title';
+            $propertyId = $tagAsSkos ? $this->properties['skos']['prefLabel']->id() : $this->properties['dcterms']['title']->id();
+            $defaultTagTerm = $propertyTerm;
+
+            // Prepare the request to check if a tag exists as item.
+            $defaultParams = [
+                'limit' => 1,
+                'sort_by' => 'id',
+                'sort_order' => 'asc',
+                'property' => [
+                    [
+                        'property' => $propertyId,
+                        'type' => 'eq',
+                        'joiner' => 'and',
+                        'text' => null,
+                    ],
+                ],
+            ];
+            if ($tagItemSetId) {
+                $defaultParams['item_set_id'] = [$tagItemSetId];
+            }
+
+            // Prepare the data to create a new tag as item.
+            $defaultTagData[$propertyTerm][] = [
+                'property_id' => $propertyId,
+                'type' => 'literal',
+                '@value' => null,
+                '@language' => $tagLanguage,
+            ];
+            if ($tagItemSetId) {
+                $defaultTagData['o:item_set'][] = ['o:id' => $tagItemSetId];
+            }
+            if ($tagAsSkos) {
+                $defaultTagData['o:resource_class'] = ['o:id' => $this->resourceClasses['skos']['Concept']->id()];
+                $template = $this->api->search('resource_templates', ['label' => 'Thesaurus Concept', 'limit' => 1])->getContent();
+                if ($template) {
+                    $template = reset($template);
+                } else {
+                    // Try to get the resource template of the module Thesaurus if the name was changed.
+                    try {
+                        $template = $this->api->read('resource_templates', ['resourceClass' => $this->resourceClasses['skos']['Concept']])->getContent();
+                    } catch (\Omeka\Api\Exception\NotFoundException $e) {
+                    }
+                }
+                if ($template) {
+                    $defaultTagData['o:resource_template'] = ['o:id' => $template->id()];
+                }
+            }
+            if ($tagMainItemId) {
+                $defaultTagData[$tagAsSkos ? 'skos:inScheme' : 'dcterms:isPartOf'][] = [
+                    'property_id' => $tagAsSkos ? $this->properties['skos']['inScheme']->id() : $this->properties['dcterms']['isPartOf']->id(),
+                    'type' => 'resource:item',
+                    '@value' => null,
+                    '@language' => null,
+                    'value_resource_id' => $tagMainItemId,
+                ];
+            }
+        }
+
+        // Do the search or create of the tag.
+        $params = $defaultParams;
+        $params['property'][0]['text'] = $tag;
+
+        $tagIds = $this->api->search('items', $params, ['initialize' => false, 'finalize' => false, 'returnScalar' => 'id'])->getContent();
+        if ($tagIds) {
+            $tagId = reset($tagIds);
+        } else {
+            $tagData = $defaultTagData;
+            $tagData[$defaultTagTerm][0]['@value'] = $tag;
+            $tagId = $this->api->create('items', $tagData)->getContent();
+            $tagId = $tagId->id();
+        }
+
+        $this->tagsToItems[$tag] = $tagId;
+        return $tagId;
     }
 }
