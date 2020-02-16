@@ -94,7 +94,7 @@ abstract class AbstractZoteroSync extends AbstractJob
                 'vocabulary_namespace_uri' => $namespaceUri,
             ])->getContent();
             foreach ($classes as $class) {
-                $this->resourceClasses[$prefix][$class->localName()] = $class;
+                $this->resourceClasses[$prefix][$class->localName()] = $class->id();
             }
         }
     }
@@ -110,7 +110,7 @@ abstract class AbstractZoteroSync extends AbstractJob
                 'vocabulary_namespace_uri' => $namespaceUri,
             ])->getContent();
             foreach ($properties as $property) {
-                $this->properties[$prefix][$property->localName()] = $property;
+                $this->properties[$prefix][$property->localName()] = $property->id();
             }
         }
     }

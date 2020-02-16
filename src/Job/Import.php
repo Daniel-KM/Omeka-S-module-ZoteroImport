@@ -245,8 +245,8 @@ class Import extends AbstractZoteroSync
         }
         foreach ($this->itemTypeMap[$type] as $prefix => $localName) {
             if (isset($this->resourceClasses[$prefix][$localName])) {
-                $class = $this->resourceClasses[$prefix][$localName];
-                $omekaItem['o:resource_class'] = ['o:id' => $class->id()];
+                $classId = $this->resourceClasses[$prefix][$localName];
+                $omekaItem['o:resource_class'] = ['o:id' => $classId];
                 return $omekaItem;
             }
         }
@@ -274,9 +274,10 @@ class Import extends AbstractZoteroSync
             }
             foreach ($this->itemFieldMap[$key] as $prefix => $localName) {
                 if (isset($this->properties[$prefix][$localName])) {
-                    $property = $this->properties[$prefix][$localName];
+                    $propertyId = $this->properties[$prefix][$localName];
                     $valueObject = [];
-                    $valueObject['property_id'] = $property->id();
+                    $valueObject['property_id'] = $propertyId;
+                    // Manage an exception.
                     if ('bibo' == $prefix && 'uri' == $localName) {
                         $valueObject['@id'] = $value;
                         $valueObject['type'] = 'uri';
@@ -284,7 +285,7 @@ class Import extends AbstractZoteroSync
                         $valueObject['@value'] = $value;
                         $valueObject['type'] = 'literal';
                     }
-                    $omekaItem[$property->term()][] = $valueObject;
+                    $omekaItem[$prefix . ':' . $localName][] = $valueObject;
                     continue 2;
                 }
             }
@@ -368,10 +369,10 @@ class Import extends AbstractZoteroSync
 
             foreach ($this->creatorTypeMap[$creatorType] as $prefix => $localName) {
                 if (isset($this->properties[$prefix][$localName])) {
-                    $property = $this->properties[$prefix][$localName];
-                    $omekaItem[$property->term()][] = [
+                    $propertyId = $this->properties[$prefix][$localName];
+                    $omekaItem[$prefix . ':' . $localName][] = [
                         '@value' => $name,
-                        'property_id' => $property->id(),
+                        'property_id' => $propertyId,
                         'type' => 'literal',
                     ];
                     continue 2;
@@ -394,13 +395,9 @@ class Import extends AbstractZoteroSync
             return $omekaItem;
         }
 
-        $property = $this->properties['dcterms']['subject'];
-        $propertyId = $property->id();
-        $propertyTerm = $property->term();
-
-        $tags = $zoteroItem['data']['tags'];
-        foreach ($tags as $tag) {
-            $omekaItem[$propertyTerm][] = [
+        $propertyId = $this->properties['dcterms']['subject'];
+        foreach ($zoteroItem['data']['tags'] as $tag) {
+            $omekaItem['dcterms:subject'][] = [
                 'property_id' => $propertyId,
                 'type' => 'literal',
                 '@value' => $tag['tag'],
@@ -423,14 +420,10 @@ class Import extends AbstractZoteroSync
             return $omekaItem;
         }
 
-        $property = $this->properties['dcterms']['subject'];
-        $propertyId = $property->id();
-        $propertyTerm = $property->term();
-
-        $tags = $zoteroItem['data']['tags'];
-        foreach ($tags as $tag) {
+        $propertyId = $this->properties['dcterms']['subject'];
+        foreach ($zoteroItem['data']['tags'] as $tag) {
             $tagId = $this->readOrCreateItemForTag($tag['tag']);
-            $omekaItem[$propertyTerm][] = [
+            $omekaItem['dcterms:subject'][] = [
                 'property_id' => $propertyId,
                 'type' => 'resource:item',
                 '@value' => null,
@@ -461,7 +454,6 @@ class Import extends AbstractZoteroSync
             && $this->getArg('syncFiles')
             && $this->getArg('apiKey')
         ) {
-            $property = $this->properties['dcterms']['title'];
             $omekaItem['o:media'][] = [
                 'o:ingester' => 'url',
                 'o:source' => $this->url->itemFile($zoteroItem['key']),
@@ -469,10 +461,10 @@ class Import extends AbstractZoteroSync
                     $zoteroItem['key'],
                     ['key' => $this->getArg('apiKey')]
                 ),
-                $property->term() => [
+                'dcterms:title' => [
                     [
                         '@value' => $zoteroItem['data']['title'],
-                        'property_id' => $property->id(),
+                        'property_id' => $this->properties['dcterms']['title'],
                         'type' => 'literal',
                     ],
                 ],
@@ -531,7 +523,7 @@ class Import extends AbstractZoteroSync
             $tagLanguage = $this->getArg('tagLanguage');
 
             $propertyTerm = $tagAsSkos ? 'skos:prefLabel' : 'dcterms:title';
-            $propertyId = $tagAsSkos ? $this->properties['skos']['prefLabel']->id() : $this->properties['dcterms']['title']->id();
+            $propertyId = $tagAsSkos ? $this->properties['skos']['prefLabel'] : $this->properties['dcterms']['title'];
             $defaultTagTerm = $propertyTerm;
 
             // Prepare the request to check if a tag exists as item.
@@ -563,7 +555,8 @@ class Import extends AbstractZoteroSync
                 $defaultTagData['o:item_set'][] = ['o:id' => $tagItemSetId];
             }
             if ($tagAsSkos) {
-                $defaultTagData['o:resource_class'] = ['o:id' => $this->resourceClasses['skos']['Concept']->id()];
+                $defaultTagData['o:resource_class'] = ['o:id' => $this->resourceClasses['skos']['Concept']];
+
                 $template = $this->api->search('resource_templates', ['label' => 'Thesaurus Concept', 'limit' => 1])->getContent();
                 if ($template) {
                     $template = reset($template);
@@ -580,7 +573,7 @@ class Import extends AbstractZoteroSync
             }
             if ($tagMainItemId) {
                 $defaultTagData[$tagAsSkos ? 'skos:inScheme' : 'dcterms:isPartOf'][] = [
-                    'property_id' => $tagAsSkos ? $this->properties['skos']['inScheme']->id() : $this->properties['dcterms']['isPartOf']->id(),
+                    'property_id' => $tagAsSkos ? $this->properties['skos']['inScheme'] : $this->properties['dcterms']['isPartOf'],
                     'type' => 'resource:item',
                     '@value' => null,
                     '@language' => null,
