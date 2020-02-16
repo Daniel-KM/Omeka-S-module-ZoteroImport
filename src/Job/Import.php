@@ -312,39 +312,58 @@ class Import extends AbstractZoteroSync
             }
 
             $name = '';
+            $testName = '';
+            $testFirst = '';
+            $testLast = '';
             if (isset($creator['name'])) {
                 $name = $creator['name'];
+                $testName = $creator['name'];
             }
             switch ($this->personName) {
                 case 'last_comma':
                     if (isset($creator['lastName'])) {
                         $name .= ' ' . $creator['lastName'];
+                        $testLast = $creator['lastName'];
                     }
                     if (isset($creator['firstName'])) {
                         $name .= ', ' . $creator['firstName'];
+                        $testFirst = $creator['firstName'];
                     }
                     break;
                 case 'last':
                     if (isset($creator['lastName'])) {
                         $name .= ' ' . $creator['lastName'];
+                        $testLast = $creator['lastName'];
                     }
                     if (isset($creator['firstName'])) {
                         $name .= ' ' . $creator['firstName'];
+                        $testFirst = $creator['firstName'];
                     }
                     break;
                 case 'first':
                 default:
                     if (isset($creator['firstName'])) {
                         $name .= ' ' . $creator['firstName'];
+                        $testFirst = $creator['firstName'];
                     }
                     if (isset($creator['lastName'])) {
                         $name .= ' ' . $creator['lastName'];
+                        $testLast = $creator['lastName'];
                     }
                     break;
             }
 
             if (!$name) {
                 continue;
+            }
+
+            // Add a check to avoid to duplicate the main name.
+            $name = trim($name);
+            if ($testName === ($testFirst . ' ' . $testLast)
+                || $testName === ($testLast . ' ' . $testFirst)
+                || $testName === ($testLast . ', ' . $testFirst)
+            ) {
+                $name = $testName;
             }
 
             foreach ($this->creatorTypeMap[$creatorType] as $prefix => $localName) {
