@@ -49,26 +49,14 @@ abstract class AbstractZoteroSync extends AbstractJob
     protected $url;
 
     /**
-     * Vocabularies to cache.
-     *
-     * @var array
-     */
-    protected $vocabularies = [
-        'dcterms' => 'http://purl.org/dc/terms/',
-        'dctype'  => 'http://purl.org/dc/dcmitype/',
-        'bibo'    => 'http://purl.org/ontology/bibo/',
-        'skos'    => 'http://www.w3.org/2004/02/skos/core#',
-    ];
-
-    /**
-     * Cache of selected Omeka resource classes
+     * Cache of Omeka resource classes.
      *
      * @var array
      */
     protected $resourceClasses = [];
 
     /**
-     * Cache of selected Omeka properties
+     * Cache of Omeka properties.
      *
      * @var array
      */
@@ -84,32 +72,30 @@ abstract class AbstractZoteroSync extends AbstractJob
     abstract public function perform();
 
     /**
-     * Cache selected resource classes.
+     * Cache resource classes.
      */
     protected function cacheResourceClasses()
     {
-        $api = $this->getServiceLocator()->get('Omeka\ApiManager');
-        foreach ($this->vocabularies as $prefix => $namespaceUri) {
-            $classes = $api->search('resource_classes', [
-                'vocabulary_namespace_uri' => $namespaceUri,
-            ])->getContent();
-            foreach ($classes as $class) {
+        /** @var \Omeka\Api\Representation\VocabularyRepresentation[] $vocabularies */
+        $vocabularies = $this->api->search('vocabularies')->getContent();
+        foreach ($vocabularies as $vocabulary) {
+            $prefix = $vocabulary->prefix();
+            foreach ($vocabulary->resourceClasses() as $class) {
                 $this->resourceClasses[$prefix][$class->localName()] = $class->id();
             }
         }
     }
 
     /**
-     * Cache selected properties.
+     * Cache properties.
      */
     protected function cacheProperties()
     {
-        $api = $this->getServiceLocator()->get('Omeka\ApiManager');
-        foreach ($this->vocabularies as $prefix => $namespaceUri) {
-            $properties = $api->search('properties', [
-                'vocabulary_namespace_uri' => $namespaceUri,
-            ])->getContent();
-            foreach ($properties as $property) {
+        /** @var \Omeka\Api\Representation\VocabularyRepresentation[] $vocabularies */
+        $vocabularies = $this->api->search('vocabularies')->getContent();
+        foreach ($vocabularies as $vocabulary) {
+            $prefix = $vocabulary->prefix();
+            foreach ($vocabulary->properties() as $property) {
                 $this->properties[$prefix][$property->localName()] = $property->id();
             }
         }
