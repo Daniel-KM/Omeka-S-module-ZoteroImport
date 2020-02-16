@@ -1,42 +1,82 @@
 <?php
-// Warning: the mapping is not one-to-one, so some data may be lost when the
-// mapping is reverted. You may adapt it to your needs.
+// The mapping is one-to-one when the ontology FaBiO is available.
+// Without it, some data may be lost when the mapping is reverted.
+// You may adapt it to your needs.
 
 // https://www.zotero.org/support/kb/item_types_and_fields#item_types
 return [
-    'artwork'             => 'bibo:Image',
-    'attachment'          => 'bibo:Document',
+    'artwork'             => [
+                                'fabio:artisticWork',
+                                'bibo:Image',
+                             ],
+    'attachment'          => [
+                                'bibo:DocumentPart',
+                                'bibo:Document',
+                             ],
     'audioRecording'      => 'bibo:AudioDocument',
     'bill'                => 'bibo:Bill',
-    'blogPost'            => 'bibo:Article',
+    'blogPost'            => [
+                                'fabio:blogPost',
+                                'bibo:Article',
+                             ],
     'book'                => 'bibo:Book',
     'bookSection'         => 'bibo:BookSection',
     'case'                => 'bibo:LegalCaseDocument',
-    'computerProgram'     => 'bibo:Document',
-    'conferencePaper'     => 'bibo:Article',
-    'dictionaryEntry'     => 'bibo:Article',
+    'computerProgram'     => [
+                                'dctype:software',
+                                'bibo:Document',
+                             ],
+    'conferencePaper'     => [
+                                'fabio:ConferencePaper',
+                                'bibo:Article',
+                             ],
+    'dictionaryEntry'     => [
+                                'fabio:ReferenceEntry',
+                                'bibo:Article',
+                             ],
     'document'            => 'bibo:Document',
     'email'               => 'bibo:Email',
-    'encyclopediaArticle' => 'bibo:Article',
+    'encyclopediaArticle' => [
+                                'fabio:Entry',
+                                'bibo:Article',
+                             ],
     'film'                => 'bibo:Film',
-    'forumPost'           => 'bibo:Article',
+    'forumPost'           => [
+                                'fabio:Opinion',
+                                'bibo:Article',
+                             ],
     'hearing'             => 'bibo:Hearing',
     'instantMessage'      => 'bibo:PersonalCommunication',
     'interview'           => 'bibo:Interview',
     'journalArticle'      => 'bibo:AcademicArticle',
     'letter'              => 'bibo:Letter',
-    'magazineArticle'     => 'bibo:Article',
+    'magazineArticle'     => [
+                                'fabio:MagazineArticle',
+                                'bibo:Article',
+                             ],
     'manuscript'          => 'bibo:Manuscript',
     'map'                 => 'bibo:Map',
-    'newspaperArticle'    => 'bibo:Article',
+    'newspaperArticle'    => [
+                                'fabio:NewspaperArticle',
+                                'bibo:Article',
+                             ],
     'note'                => 'bibo:Note',
     'patent'              => 'bibo:Patent',
-    'podcast'             => 'bibo:AudioDocument',
+    'podcast'             => [
+                                'fabio:AudioDocument',
+                                'bibo:AudioDocument',
+                             ],
     'presentation'        => 'bibo:Slideshow',
-    'radioBroadcast'      => 'bibo:AudioDocument',
+    'radioBroadcast'      => [
+                                'dctype:Sound',
+                                'bibo:AudioDocument',
+                             ],
     'report'              => 'bibo:Report',
     'statute'             => 'bibo:Statute',
-    'tvBroadcast'         => 'bibo:AudioVisualDocument',
+    'tvBroadcast'         => [
+                                'fabio:MovingImage',
+                                'bibo:AudioVisualDocument',
+                             ],
     'thesis'              => 'bibo:Thesis',
     'videoRecording'      => 'bibo:AudioVisualDocument',
     'webpage'             => 'bibo:Webpage',
