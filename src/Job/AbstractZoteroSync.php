@@ -126,15 +126,24 @@ abstract class AbstractZoteroSync extends AbstractJob
         $map = $this->loadMapping($mapping);
         foreach ($map as $key => &$term) {
             if ($term) {
-                $value = explode(':', $term);
-                if (isset($this->$termType[$value[0]][$value[1]])) {
-                    $term = [$value[0] => $value[1]];
+                if (is_array($term)) {
+                    // Keep only the first existing map.
+                    foreach ($term as &$termTerm) {
+                        $value = explode(':', $termTerm);
+                        if (isset($this->$termType[$value[0]][$value[1]])) {
+                            $term = [$value[0] => $value[1]];
+                            continue 2;
+                        }
+                    }
                 } else {
-                    unset($map[$key]);
+                    $value = explode(':', $term);
+                    if (isset($this->$termType[$value[0]][$value[1]])) {
+                        $term = [$value[0] => $value[1]];
+                        continue;
+                    }
                 }
-            } else {
-                unset($map[$key]);
             }
+            unset($map[$key]);
         }
         return $map;
     }
